@@ -3,8 +3,8 @@ on:
   - pull_request
   - push
 jobs:
-  terraform:
-    name: 'Terraform'
+  terraform-init:
+    name: 'Terraform-Init'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
@@ -14,3 +14,27 @@ jobs:
         with:
           tf_actions_version: 0.12.18
           tf_actions_subcommand: "init"
+  terraform-validate:
+    needs: terraform-init
+    name: 'Terraform-Validate'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@master
+      - name: 'Terraform Format'
+        uses: hashicorp/terraform-github-actions@master
+        with:
+          tf_actions_version: 0.12.18
+          tf_actions_subcommand: "validate"
+  terraform-plan:
+      needs: terraform-validate
+      name: 'Terraform-Plan'
+      runs-on: ubuntu-latest
+      steps:
+        - name: 'Checkout'
+          uses: actions/checkout@master
+        - name: 'Terraform Format'
+          uses: hashicorp/terraform-github-actions@master
+          with:
+            tf_actions_version: 0.12.18
+            tf_actions_subcommand: "plan"
