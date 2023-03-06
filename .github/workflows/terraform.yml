@@ -1,40 +1,29 @@
-name: 'Terraform GitHub Actions'
+name: Terraform Workflow
+
 on:
-  - pull_request
-  - push
+  push:
+    branches:
+      - main
+
 jobs:
-  terraform-init:
-    name: 'Terraform-Init'
+  terraform:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout'
-        uses: actions/checkout@master
-      - name: 'Terraform Format'
-        uses: hashicorp/terraform-github-actions@master
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
         with:
-          tf_actions_version: 0.12.18
-          tf_actions_subcommand: "init"
-  terraform-validate:
-    needs: terraform-init
-    name: 'Terraform-Validate'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@master
-      - name: 'Terraform Format'
-        uses: hashicorp/terraform-github-actions@master
-        with:
-          tf_actions_version: 0.12.18
-          tf_actions_subcommand: "validate"
-  terraform-plan:
-      needs: terraform-validate
-      name: 'Terraform-Plan'
-      runs-on: ubuntu-latest
-      steps:
-        - name: 'Checkout'
-          uses: actions/checkout@master
-        - name: 'Terraform Format'
-          uses: hashicorp/terraform-github-actions@master
-          with:
-            tf_actions_version: 0.12.18
-            tf_actions_subcommand: "plan"
+          terraform_version: 1.1.0
+      - name: Terraform Init
+        run: terraform init
+      - name: Terraform Validate
+        run: terraform validate
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+      - name: Terraform Destroy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'pull_request'
+        run: terraform destroy -auto-approve
